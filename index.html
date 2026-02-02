@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Wynn'c AR Experience</title>
+    <title>Wynn'c AR Autoplay</title>
     <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.3.0/dist/aframe-master.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
     <style>
@@ -15,13 +15,58 @@
 <body style="margin: 0; overflow: hidden;">
     <div class="arjs-loader"><div>กำลังโหลดพลังงานผิวใส...</div></div>
 
-    <a-scene vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: true;" embedded arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+    <a-scene 
+        vr-mode-ui="enabled: false;" 
+        renderer="logarithmicDepthBuffer: true; precision: medium;" 
+        embedded 
+        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
         
-        <a-nft type="nft" url="./wynnc" smooth="true" smoothCount="10" smoothTolerance=".01" smoothThreshold="5">
-            <a-video src="wynn-vdo.mp4" width="100" height="150" position="50 0 -50" rotation="-90 0 0"></a-video>
+        <a-assets>
+            <video id="vdo" src="wynn-vdo.mp4" 
+                preload="auto" 
+                autoplay="true"
+                loop="true" 
+                muted="true" 
+                playsinline 
+                webkit-playsinline>
+            </video>
+        </a-assets>
+
+        <a-nft 
+            id="nft-target"
+            type="nft" 
+            url="./wynnc" 
+            smooth="true" smoothCount="10" smoothTolerance=".01" smoothThreshold="5">
+            
+            <a-video 
+                src="#vdo" 
+                width="160" height="240" 
+                position="80 0 -120" 
+                rotation="-90 0 0">
+            </a-video>
         </a-nft>
 
         <a-entity camera></a-entity>
     </a-scene>
+
+    <script>
+        const vdo = document.querySelector('#vdo');
+        const nft = document.querySelector('#nft-target');
+
+        // สั่งให้วิดีโอ Standby รอตั้งแต่วินาทีแรก
+        document.addEventListener('DOMContentLoaded', () => {
+            vdo.load();
+        });
+
+        // เมื่อกล้องส่องเจอหน้ากล่องปุ๊บ ให้สั่ง play ทันที
+        nft.addEventListener('markerFound', () => {
+            vdo.play();
+        });
+
+        // ถ้าลูกค้าหันกล้องหนี ให้หยุดไว้ก่อนเพื่อไม่ให้เปลืองแบต
+        nft.addEventListener('markerLost', () => {
+            vdo.pause();
+        });
+    </script>
 </body>
 </html>
