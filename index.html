@@ -1,61 +1,103 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Wynn'c AR Experience</title>
+  <title>Wynn’C AR Experience</title>
 
-  <!-- แนะนำใช้ A-Frame release ปกติ (ไม่ใช้ master) -->
+  <!-- ใช้เวอร์ชัน release เสถียร -->
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.7.0/dist/aframe.min.js"></script>
-  <!-- แนะนำ pin เวอร์ชัน AR.js แทน master เพื่อลดพัง -->
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar-nft.js"></script>
 
   <style>
-    body { margin: 0; overflow: hidden; }
+    body { margin: 0; overflow: hidden; background: #000; }
+
     .arjs-loader {
-      height: 100%; width: 100%; position: absolute; top: 0; left: 0;
-      background: rgba(0,0,0,.8); z-index: 9999;
+      height: 100%; width: 100%;
+      position: absolute; top: 0; left: 0;
+      background: rgba(0,0,0,.85);
+      z-index: 9999;
       display: flex; justify-content: center; align-items: center;
-      color: #fff; font-family: sans-serif; text-align: center; padding: 24px;
+      padding: 24px;
+      box-sizing: border-box;
+      color: #fff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      text-align: center;
     }
+
     .tap-to-start {
-      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
       z-index: 10000;
-      background: rgba(255,255,255,.92); color: #111;
-      border-radius: 16px; padding: 14px 16px; font-family: sans-serif;
-      cursor: pointer; user-select: none;
+
+      background: rgba(255,255,255,.92);
+      color: #111;
+      border-radius: 18px;
+      padding: 14px 16px;
+      font-size: 16px;
+      line-height: 1.3;
+      text-align: center;
+      user-select: none;
+      cursor: pointer;
+
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      display: none;
+      max-width: 90vw;
+    }
+
+    .hint {
+      position: absolute;
+      left: 50%; bottom: 16px;
+      transform: translateX(-50%);
+      z-index: 10000;
+      background: rgba(0,0,0,.45);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
       display: none;
     }
   </style>
 </head>
 
 <body>
+  <!-- Loader -->
   <div class="arjs-loader" id="loader">
-    กำลังโหลดพลังงานผิวใส...<br>(ส่องไปที่หน้ากล่อง Wynn'c)
+    กำลังโหลดพลังงานผิวใส…<br/>
+    <small style="opacity:.85">(อนุญาตกล้อง แล้วส่องไปที่หน้ากล่อง Wynn’C)</small>
   </div>
 
-  <div class="tap-to-start" id="tapToStart">แตะเพื่อเริ่ม AR + วิดีโอ</div>
+  <!-- Tap-to-start overlay -->
+  <div class="tap-to-start" id="tapToStart">
+    แตะเพื่อเริ่ม AR + วิดีโอ<br/>
+    <small style="opacity:.75">ต้องแตะ 1 ครั้งเพื่อให้ Chrome อนุญาตเล่นวิดีโอ</small>
+  </div>
+
+  <div class="hint" id="hint">เล็งที่หน้ากล่องให้ชัด ๆ แล้วค้างไว้ 1–2 วิ</div>
 
   <a-scene
     vr-mode-ui="enabled: false"
-    renderer="logarithmicDepthBuffer: true"
     embedded
+    renderer="logarithmicDepthBuffer: true; antialias: true;"
     arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
 
     <a-assets>
-      <!-- ถ้าไฟล์อยู่โดเมนเดียวกัน ไม่ต้องใส่ crossorigin ก็ได้ (กันปัญหา CORS) -->
-      <video id="vdo"
-        src="wynn-vdo2.mp4"
+      <!-- แนะนำ: ไฟล์ต้องเป็น mp4 H.264 yuv420p และขนาดไม่ใหญ่เกิน -->
+      <video
+        id="vdo"
+        src="wynn-vdo.mp4"
         preload="auto"
         loop
         muted
         playsinline
-        webkit-playsinline>
-      </video>
+        webkit-playsinline
+      ></video>
     </a-assets>
 
-    <!-- ใส่ component videohandler เพื่อ play/pause ตาม marker -->
+    <!-- เปลี่ยน url เป็น path ของ NFT ของมึง -->
     <a-nft
+      id="marker"
       videohandler
       type="nft"
       url="./wynnc"
@@ -64,9 +106,10 @@
       smoothTolerance="0.01"
       smoothThreshold="5">
 
-      <!-- ขนาดเป็น “เมตร” นะมึง ไม่ใช่ px -->
-      <!-- ถ้าจะทาบ “ด้านหน้ากล่อง” (แนวตั้ง) ให้ลอง rotation="0 0 0" ก่อน -->
+      <!-- ขนาดหน่วยเป็น "เมตร" ไม่ใช่พิกเซล -->
+      <!-- เริ่มต้นแนะนำแนวตั้ง: 1.0 x 1.5 -->
       <a-video
+        id="arVideo"
         src="#vdo"
         width="1.0"
         height="1.5"
@@ -79,42 +122,93 @@
   </a-scene>
 
   <script>
-    // component: เล่นวิดีโอเมื่อเห็น marker, pause เมื่อหาย
+    /**
+     * videohandler:
+     * - แตะครั้งแรกเพื่อปลดล็อกการเล่นวิดีโอบนมือถือ
+     * - เล่นเมื่อ markerFound / หยุดเมื่อ markerLost
+     */
     AFRAME.registerComponent('videohandler', {
       init: function () {
-        this.video = document.querySelector('#vdo');
-        this.loader = document.querySelector('#loader');
-        this.tap = document.querySelector('#tapToStart');
+        const video = document.querySelector('#vdo');
+        const loader = document.querySelector('#loader');
+        const tap = document.querySelector('#tapToStart');
+        const hint = document.querySelector('#hint');
 
-        // มือถือจำนวนมากต้อง "tap ครั้งแรก" เพื่อปลดล็อก play()
-        const unlock = async () => {
+        let unlocked = false;
+
+        const hideLoader = () => { if (loader) loader.style.display = 'none'; };
+        const showTap = () => { if (tap) tap.style.display = 'block'; };
+        const hideTap = () => { if (tap) tap.style.display = 'none'; };
+        const showHint = () => { if (hint) hint.style.display = 'block'; };
+        const hideHint = () => { if (hint) hint.style.display = 'none'; };
+
+        // พยายาม play (จะสำเร็จเมื่อได้รับ user gesture แล้ว หรือ autoplay policy ผ่าน)
+        const tryPlay = async () => {
+          if (!video) return;
+
           try {
-            await this.video.play();
-            // เล่นได้แล้ว -> ซ่อนปุ่ม
-            this.tap.style.display = 'none';
+            // Android บางรุ่นต้อง set currentTime = 0 ก่อนเพื่อให้ texture ติด
+            if (isNaN(video.duration)) {
+              // ยังไม่ metadata
+            } else if (video.currentTime === 0) {
+              // ok
+            }
+
+            await video.play();
+            unlocked = true;
+            hideTap();
+            hideLoader();
+            return true;
           } catch (e) {
-            // ยังเล่นไม่ได้ -> ต้องให้ user tap อีก/หรือยังไม่ได้ gesture
-            this.tap.style.display = 'block';
+            // ยังเล่นไม่ได้ -> ต้องแตะ
+            showTap();
+            hideLoader();
+            return false;
           }
         };
 
-        // แสดงปุ่ม tap ตั้งแต่แรก (กัน iOS งอแง)
-        this.tap.style.display = 'block';
-        this.tap.addEventListener('click', unlock);
+        // เมื่อกดแตะครั้งแรก ให้ unlock
+        showTap();
+        tap.addEventListener('click', async () => {
+          await tryPlay();
+        });
 
-        // ซ่อน loader เมื่อเริ่มได้ (อย่างน้อย scene init แล้ว)
-        setTimeout(() => { if (this.loader) this.loader.style.display = 'none'; }, 1500);
+        // กันกรณี loader ค้าง (เช่น user ยังไม่อนุญาตกล้อง)
+        setTimeout(() => {
+          hideLoader();
+          showHint();
+        }, 1200);
 
-        // เมื่อเจอภาพ (markerFound) ค่อยเล่น
-        this.el.addEventListener('markerFound', unlock);
+        // เมื่อจับ marker ได้ -> เล่น
+        this.el.addEventListener('markerFound', async () => {
+          showHint();
+          const ok = await tryPlay();
+          if (ok) {
+            // พอเล่นได้แล้วค่อยซ่อน hint หลัง 2 วิ
+            setTimeout(() => hideHint(), 2000);
+          }
+        });
 
-        // เมื่อหลุดภาพ (markerLost) ค่อยพัก
+        // เมื่อหลุด marker -> pause
         this.el.addEventListener('markerLost', () => {
-          try { this.video.pause(); } catch(e) {}
+          try { video.pause(); } catch (e) {}
+          showHint();
+        });
+
+        // ถ้า user สลับแท็บ/ล็อคจอ -> pause กันค้าง
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) {
+            try { video.pause(); } catch (e) {}
+          }
+        });
+
+        // ถ้า metadata พร้อมแล้ว ลอง play เงียบ ๆ (บางเครื่องผ่าน)
+        video.addEventListener('loadedmetadata', () => {
+          // ไม่บังคับ แต่ลองเผื่อได้
+          if (!unlocked) tryPlay();
         });
       }
     });
   </script>
 </body>
 </html>
-
