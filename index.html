@@ -1,72 +1,119 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Wynn'c AR Autoplay</title>
-    <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.3.0/dist/aframe-master.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
-    <style>
-        .arjs-loader { height: 100%; width: 100%; position: absolute; top: 0; left: 0; background-color: rgba(0, 0, 0, 0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; }
-        .arjs-loader div { text-align: center; font-size: 1.25em; color: white; font-family: sans-serif; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Wynn'c AR Experience</title>
+
+  <!-- แนะนำใช้ A-Frame release ปกติ (ไม่ใช้ master) -->
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.7.0/dist/aframe.min.js"></script>
+  <!-- แนะนำ pin เวอร์ชัน AR.js แทน master เพื่อลดพัง -->
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar-nft.js"></script>
+
+  <style>
+    body { margin: 0; overflow: hidden; }
+    .arjs-loader {
+      height: 100%; width: 100%; position: absolute; top: 0; left: 0;
+      background: rgba(0,0,0,.8); z-index: 9999;
+      display: flex; justify-content: center; align-items: center;
+      color: #fff; font-family: sans-serif; text-align: center; padding: 24px;
+    }
+    .tap-to-start {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      z-index: 10000;
+      background: rgba(255,255,255,.92); color: #111;
+      border-radius: 16px; padding: 14px 16px; font-family: sans-serif;
+      cursor: pointer; user-select: none;
+      display: none;
+    }
+  </style>
 </head>
 
-<body style="margin: 0; overflow: hidden;">
-    <div class="arjs-loader"><div>กำลังโหลดพลังงานผิวใส...</div></div>
+<body>
+  <div class="arjs-loader" id="loader">
+    กำลังโหลดพลังงานผิวใส...<br>(ส่องไปที่หน้ากล่อง Wynn'c)
+  </div>
 
-    <a-scene 
-        vr-mode-ui="enabled: false;" 
-        renderer="logarithmicDepthBuffer: true; precision: medium;" 
-        embedded 
-        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
-        
-        <a-assets>
-            <video id="vdo" src="wynn-vdo.mp4" 
-                preload="auto" 
-                autoplay="true"
-                loop="true" 
-                muted="true" 
-                playsinline 
-                webkit-playsinline>
-            </video>
-        </a-assets>
+  <div class="tap-to-start" id="tapToStart">แตะเพื่อเริ่ม AR + วิดีโอ</div>
 
-        <a-nft 
-            id="nft-target"
-            type="nft" 
-            url="./wynnc" 
-            smooth="true" smoothCount="10" smoothTolerance=".01" smoothThreshold="5">
-            
-            <a-video 
-                src="#vdo" 
-                width="160" height="240" 
-                position="80 0 -120" 
-                rotation="-90 0 0">
-            </a-video>
-        </a-nft>
+  <a-scene
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true"
+    embedded
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
 
-        <a-entity camera></a-entity>
-    </a-scene>
+    <a-assets>
+      <!-- ถ้าไฟล์อยู่โดเมนเดียวกัน ไม่ต้องใส่ crossorigin ก็ได้ (กันปัญหา CORS) -->
+      <video id="vdo"
+        src="wynn-vdo.mp4"
+        preload="auto"
+        loop
+        muted
+        playsinline
+        webkit-playsinline>
+      </video>
+    </a-assets>
 
-    <script>
-        const vdo = document.querySelector('#vdo');
-        const nft = document.querySelector('#nft-target');
+    <!-- ใส่ component videohandler เพื่อ play/pause ตาม marker -->
+    <a-nft
+      videohandler
+      type="nft"
+      url="./wynnc"
+      smooth="true"
+      smoothCount="10"
+      smoothTolerance="0.01"
+      smoothThreshold="5">
 
-        // สั่งให้วิดีโอ Standby รอตั้งแต่วินาทีแรก
-        document.addEventListener('DOMContentLoaded', () => {
-            vdo.load();
+      <!-- ขนาดเป็น “เมตร” นะมึง ไม่ใช่ px -->
+      <!-- ถ้าจะทาบ “ด้านหน้ากล่อง” (แนวตั้ง) ให้ลอง rotation="0 0 0" ก่อน -->
+      <a-video
+        src="#vdo"
+        width="1.0"
+        height="1.5"
+        position="0 0 0"
+        rotation="0 0 0">
+      </a-video>
+    </a-nft>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    // component: เล่นวิดีโอเมื่อเห็น marker, pause เมื่อหาย
+    AFRAME.registerComponent('videohandler', {
+      init: function () {
+        this.video = document.querySelector('#vdo');
+        this.loader = document.querySelector('#loader');
+        this.tap = document.querySelector('#tapToStart');
+
+        // มือถือจำนวนมากต้อง "tap ครั้งแรก" เพื่อปลดล็อก play()
+        const unlock = async () => {
+          try {
+            await this.video.play();
+            // เล่นได้แล้ว -> ซ่อนปุ่ม
+            this.tap.style.display = 'none';
+          } catch (e) {
+            // ยังเล่นไม่ได้ -> ต้องให้ user tap อีก/หรือยังไม่ได้ gesture
+            this.tap.style.display = 'block';
+          }
+        };
+
+        // แสดงปุ่ม tap ตั้งแต่แรก (กัน iOS งอแง)
+        this.tap.style.display = 'block';
+        this.tap.addEventListener('click', unlock);
+
+        // ซ่อน loader เมื่อเริ่มได้ (อย่างน้อย scene init แล้ว)
+        setTimeout(() => { if (this.loader) this.loader.style.display = 'none'; }, 1500);
+
+        // เมื่อเจอภาพ (markerFound) ค่อยเล่น
+        this.el.addEventListener('markerFound', unlock);
+
+        // เมื่อหลุดภาพ (markerLost) ค่อยพัก
+        this.el.addEventListener('markerLost', () => {
+          try { this.video.pause(); } catch(e) {}
         });
-
-        // เมื่อกล้องส่องเจอหน้ากล่องปุ๊บ ให้สั่ง play ทันที
-        nft.addEventListener('markerFound', () => {
-            vdo.play();
-        });
-
-        // ถ้าลูกค้าหันกล้องหนี ให้หยุดไว้ก่อนเพื่อไม่ให้เปลืองแบต
-        nft.addEventListener('markerLost', () => {
-            vdo.pause();
-        });
-    </script>
+      }
+    });
+  </script>
 </body>
 </html>
